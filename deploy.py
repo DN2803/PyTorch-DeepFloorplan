@@ -1,7 +1,6 @@
 import sys
-sys.path.append('./utils/')
 from utils.rgb_ind_convertor import *
-from utils.util import get_device
+from utils.util import get_device, fill_break_line, flood_fill, refine_room_region
 from utils import *
 import cv2
 from net import *
@@ -75,13 +74,14 @@ def main(args):
     plt.subplot(1,3,1); plt.imshow(orig[:,:,::-1])
     plt.subplot(1,3,2); plt.imshow(rgb)
     plt.subplot(1,3,3); plt.imshow(predboundary)
+    plt.axis("off")
     plt.show()
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument('--loadmodel',type=str,default="log/store2/checkpoint.pt")
     p.add_argument('--postprocess',type=bool,default=False)
-    p.add_argument('--image_path',type=str,default="/media/yui/Disk/data/deepfloorplan/dataset/newyork/test/47545145.jpg")
+    p.add_argument('--image_path',type=str,default="dataset/newyork/test/47545145.jpg")
     args = p.parse_args()
 
     main(args)

@@ -1,5 +1,7 @@
 from importmod import *
 from utils.util import get_device
+import matplotlib.pyplot as plt
+from deploy import BCHW2colormap, post_process
 class DFPmodel(torch.nn.Module):
     def __init__(self,pretrained=True,freeze=True):
         super(DFPmodel,self).__init__()
@@ -172,15 +174,23 @@ class DFPmodel(torch.nn.Module):
 if __name__ == "__main__":
 
     with torch.no_grad():
-        testin = torch.randn(1,3,512,512)
+        
+        sample = np.load("")
+        image = sample["image"]
+        model_input = torch.Tensor(image.astype(np.float32) / 255.0)
+
         model = DFPmodel()
-        model.load_state_dict(torch.load('weights650.pth'))
-        ### Shared VGG encoder
-        logits_r,logits_cw = model.forward(testin)
-        # 0: 64x256x256, 1: 128x128x128
-        # 2: 256x64x64, 3: 512x32x32, 4: 512x16x16
-        print(logits_cw.size(),logits_r.size())
-        breakpoint()
-        gc.collect()
+        model.load_state_dict(torch.load('log/store2/checkpoint.pt'))
+        
+        model.eval()
+        logits_r,logits_cw = model(model_input)
+        predroom = BCHW2colormap(logits_r)
+        predboundary = BCHW2colormap(logits_cw)
+        predroom = post_process(predroom,predboundary)
+        rgb = ind2rgb(predroom,color_map=floorplan_fuse_map)
+        plt.subplot(1,3,1); plt.imshow(image[:,:,::-1])
+        plt.subplot(1,3,2); plt.imshow(rgb)
+        plt.subplot(1,3,3); plt.imshow(predboundary)
+        plt.show()
 
 
