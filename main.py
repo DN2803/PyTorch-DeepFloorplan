@@ -9,6 +9,7 @@ from torch.utils.data.sampler import SubsetRandomSampler
 from pytorchtools import EarlyStopping
 from net import *
 from data import *
+from utils.util import get_device
 
 def balanced_entropy(preds,targets):
     eps = 1e-6
@@ -74,7 +75,7 @@ def compare(images,rooms,boundaries,r,cw):
 
 def setup(args):
     # device
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = get_device()
     # dnn model
     model = DFPmodel(pretrained=args.pretrained,freeze=args.freeze)
     if args.loadmodel:

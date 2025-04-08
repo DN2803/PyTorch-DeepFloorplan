@@ -35,6 +35,11 @@ def process_dataset(dataset_type):
         boundary = cv2.resize(boundary, IMAGE_SIZE, interpolation=cv2.INTER_NEAREST_EXACT).astype(np.uint8)
         room = cv2.resize(room, IMAGE_SIZE, interpolation=cv2.INTER_NEAREST_EXACT).astype(np.uint8)
         door = cv2.resize(door, IMAGE_SIZE, interpolation=cv2.INTER_NEAREST_EXACT).astype(np.uint8)
+
+        # Skip invalid samples
+        unique_rooms = np.unique(room).tolist()
+        if any(room_id > 9 or room_id < 0 for room_id in unique_rooms):
+            continue
         
         if not os.path.exists(f"np_dataset/{dataset_type}"):
             os.makedirs(f"np_dataset/{dataset_type}")
@@ -92,7 +97,7 @@ if __name__ == "__main__":
     # Plot a sample from the test set
     test_samples = os.listdir("np_dataset/test")
     if test_samples:
-        while True:
+        for i in range(10):
             idx = random.randint(0, len(test_samples))
             sample_path = os.path.join("np_dataset/test", test_samples[idx])
             print(f"Plotting sample: {sample_path}")

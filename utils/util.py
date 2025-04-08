@@ -4,12 +4,13 @@ from scipy import ndimage
 import torch
 
 def get_device() -> torch.device:
+    device = torch.device("cpu")
     if torch.backends.mps.is_available():
-        return torch.device("mps")
+        device = torch.device("mps")
     elif torch.cuda.is_available():
-        return torch.device("cuda")
-    else:
-        return torch.device("cpu")
+        device = torch.device("cuda")
+    print("PyTorch device:", device)
+    return device
 
 
 def fast_hist(im, gt, n=9):

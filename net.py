@@ -110,7 +110,7 @@ class DFPmodel(torch.nn.Module):
         pad = ((np.array(shape[2:])-1)/2).astype(int)
         conv = nn.Conv2d(1,1,shape[2:],1,list(pad),bias=False)
         conv.weight = w
-        conv.to(self.device);
+        conv.to(self.device)
         return conv(t)
 
     def non_local_context(self,t1,t2,idx,stride=4):

@@ -1,6 +1,7 @@
 import sys
 sys.path.append('./utils/')
 from utils.rgb_ind_convertor import *
+from utils.util import get_device
 from utils import *
 import cv2
 from net import *
@@ -19,7 +20,7 @@ def BCHW2colormap(tensor,earlyexit=False):
 
 def initialize(args):
     # device
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = get_device()
     # data
     trans = transforms.Compose([transforms.ToTensor()])
     orig = cv2.imread(args.image_path)
