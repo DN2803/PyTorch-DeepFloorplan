@@ -176,7 +176,7 @@ def main(args):
 
 if __name__ == "__main__":    
     p = argparse.ArgumentParser()
-    p.add_argument('--batch_size',type=int,default=16)
+    p.add_argument('--batch_size',type=int,default=4)
     p.add_argument('--maxiters',type=int,default=2000)
     p.add_argument('--numworkers',type=int,default=1)
     p.add_argument('--pretrained',type=bool,default=True)

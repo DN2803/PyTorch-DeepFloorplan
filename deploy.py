@@ -1,7 +1,7 @@
 import sys
 sys.path.append('./utils/')
-from rgb_ind_convertor import *
-from util import *
+from utils.rgb_ind_convertor import *
+from utils import *
 import cv2
 from net import *
 from data import *

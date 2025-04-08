@@ -8,7 +8,7 @@ import torchvision
 from torchvision import transforms,utils,models
 import sys
 sys.path.append('./utils/')
-from rgb_ind_convertor import *
-from util import *
+from utils.rgb_ind_convertor import *
+from utils import *
 
 
