@@ -12,6 +12,7 @@ from utils.rgb_ind_convertor import floorplan_fuse_map, rgb2ind
 IMAGE_SIZE = (512, 512)  # (height, width)
 
 def process_dataset(dataset_type):
+    # dataset_path = f"./dataset/r3d_{dataset_type}.txt"
     dataset_path = f"./dataset/r3d_{dataset_type}.txt"
     print("Processing dataset:", dataset_path)
 
