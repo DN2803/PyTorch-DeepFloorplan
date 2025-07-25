@@ -10,6 +10,7 @@ from pytorchtools import EarlyStopping
 from net import *
 from data import *
 from utils.util import get_device
+from utils.metrics import calculate_iou, calculate_dice
 
 def balanced_entropy(preds,targets):
     eps = 1e-6
@@ -83,7 +84,10 @@ def setup(args):
     model.to(device)
     # optimizer
     optimizer = optim.Adam(model.parameters(),lr=1e-4,weight_decay=1e-5)
-    return device,model,optimizer
+    # Khởi tạo Scheduler để tự động giảm learning rate
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=10, factor=0.1, verbose=True)
+    return device,model,optimizer,scheduler
+
 
 def getloader(args):
     # data
@@ -103,7 +107,7 @@ def getloader(args):
     return train_loader,valid_loader,total_image,total_batch
 
 def main(args):
-    device,model,optimizer = setup(args)
+    device,model,optimizer,scheduler = setup(args)
     train_loader,valid_loader,total_image,total_batch = getloader(args)
     if args.earlystop:
         early_stopping = EarlyStopping(patience=args.patience,verbose=True)
@@ -140,6 +144,8 @@ def main(args):
         print("Epoch {} Total Train Loss: {:.1f}".format(epoch,running_loss))
         
         running_loss_val = 0.0
+        total_iou_r, total_dice_r = 0.0, 0.0
+        total_iou_cw, total_dice_cw = 0.0,
         for idx,(im,cw,r,_) in enumerate(valid_loader):
             im,cw,r = im.to(device),cw.to(device),r.to(device)
             with torch.no_grad():
@@ -152,18 +158,33 @@ def main(args):
                 loss2 = balanced_entropy(logits_cw,cw)
                 w1,w2 = cross_two_tasks_weight(r,cw)
                 loss = w1*loss1 + w2*loss2
+                # calculate metrics
+                iou_r = calculate_iou(logits_r.argmax(dim=1), r.argmax(dim=1), num_classes=9)
+                dice_r = calculate_dice(logits_r.argmax(dim=1), r.argmax(dim=1), num_classes=9)
+                iou_cw = calculate_iou(logits_cw.argmax(dim=1), cw.argmax(dim=1), num_classes=3)
+                dice_cw = calculate_dice(logits_cw.argmax(dim=1), cw.argmax(dim=1), num_classes=3)
+                total_iou_r += iou_r.item()
+                total_dice_r += dice_r.item()
+                total_iou_cw += iou_cw.item()
+                total_dice_cw += dice_cw.item()
             # statistics
             running_loss_val += loss.item()
 
-        print("Epoch {} Total Val Loss: {:.1f}".format(epoch,running_loss_val))
+        print("Epoch {} Total Val Loss: {:.1f} iou_r: {:.1f} dice_r: {:.1f} iou_cw: {:.1f} dice_cw: {:.1f}".format(
+            epoch,running_loss_val, total_iou_r/len(valid_loader), total_dice_r/len(valid_loader), total_iou_cw/len(valid_loader), total_dice_cw/len(valid_loader)))
         if args.tensorboard:
             if epoch == 0 or epoch%20 ==0:
                 f2 = compare(im,r,cw,logits_r,logits_cw)
                 writer.add_figure('val',f2,epoch)
             writer.add_scalars('loss',{'train_loss':running_loss,
             'valid_loss':running_loss_val},epoch)
+        # scheduler
+        scheduler.step(running_loss_val)
         if args.earlystop:
             early_stopping(running_loss_val,model)
+            if early_stopping.early_stop:
+                print("Early stopping")
+                break
         else:
             torch.save(model.state_dict(),'log/store2/checkpoint.pt')
         
