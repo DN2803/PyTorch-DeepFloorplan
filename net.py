@@ -19,8 +19,8 @@ class DFPmodel(torch.nn.Module):
         # We need to map these to [batch_size, num_room_types, H, W] and [batch_size, num_boundary_types, H, W]
         # For simplicity, let's assume num_queries can be mapped to num_room_types and num_boundary_types.
         # The original model outputs 9 channels for room types and 3 for boundaries.
-        self.room_type_head = nn.Conv2d(self.mask2former.config.mask_channels, 9, kernel_size=1)
-        self.boundary_head = nn.Conv2d(self.mask2former.config.mask_channels, 3, kernel_size=1)
+        self.room_type_head = nn.Conv2d(self.mask2former.config.num_queries, 9, kernel_size=1)
+        self.boundary_head = nn.Conv2d(self.mask2former.config.num_queries, 3, kernel_size=1)
     
 
 
@@ -43,7 +43,7 @@ class DFPmodel(torch.nn.Module):
 
         # For simplicity, let's take the predicted masks and apply our heads
         # First, resize pred_masks to original_size if necessary
-        pred_masks = F.interpolate(outputs.pred_masks, size=original_size, mode="bilinear", align_corners=False)
+        pred_masks = F.interpolate(outputs.masks_queries_logits, size=original_size, mode="bilinear", align_corners=False)
 
         # Apply the custom heads to get the desired output channels
         # Note: This is a simplified mapping. A more sophisticated approach might involve
