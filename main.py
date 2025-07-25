@@ -145,7 +145,7 @@ def main(args):
         
         running_loss_val = 0.0
         total_iou_r, total_dice_r = 0.0, 0.0
-        total_iou_cw, total_dice_cw = 0.0,
+        total_iou_cw, total_dice_cw = 0.0, 0.0
         for idx,(im,cw,r,_) in enumerate(valid_loader):
             im,cw,r = im.to(device),cw.to(device),r.to(device)
             with torch.no_grad():
