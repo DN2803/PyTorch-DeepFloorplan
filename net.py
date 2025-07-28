@@ -19,8 +19,8 @@ class DFPmodel(torch.nn.Module):
         # We need to map these to [batch_size, num_room_types, H, W] and [batch_size, num_boundary_types, H, W]
         # For simplicity, let's assume num_queries can be mapped to num_room_types and num_boundary_types.
         # The original model outputs 9 channels for room types and 3 for boundaries.
-        self.room_type_head = nn.Conv2d(self.mask2former.config.num_queries, 9, kernel_size=1)
-        self.boundary_head = nn.Conv2d(self.mask2former.config.num_queries, 3, kernel_size=1)
+        self.room_type_head = nn.Conv2d(1, 9, kernel_size=1)
+        self.boundary_head = nn.Conv2d(1, 3, kernel_size=1)
     
 
 
