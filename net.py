@@ -24,32 +24,45 @@ class DFPmodel(torch.nn.Module):
     
 
 
-    def forward(self,x):
-        # Resize input to Mask2Former expected size (e.g., 512x512 or 1024x1024)
-        # Mask2Former expects input in the range [0, 1] and normalized
-        # Assuming x is already normalized to [0, 1]
+    def forward(self, x):
         original_size = x.shape[-2:]
-        
-        # Mask2FormerForUniversalSegmentation expects pixel_values as input
+        if x.ndim == 3:
+            x = x.unsqueeze(0)  # (1, C, H, W)
+        if x.shape[1] == 3 and x.max() > 1:
+            x = x / 255.0
+
+        x = x.to(self.device)
+
+        # Mask2Former expects pixel_values (normalized)
         outputs = self.mask2former(pixel_values=x)
 
-        # Mask2Former outputs: pred_masks (logits for masks), pred_logits (logits for classes)
-        # pred_masks: (batch_size, num_queries, H_mask, W_mask)
-        # pred_logits: (batch_size, num_queries, num_labels)
+        # outputs.pred_masks: (B, num_queries, H_mask, W_mask)
+        # outputs.pred_logits: (B, num_queries, num_classes)
+        pred_masks = outputs.pred_masks  # Shape: (B, Q, H, W)
+        pred_logits = outputs.class_queries_logits  # (B, Q, C)
 
-        # We need to convert these to the original model's output format:
-        # logits_r (room types): (batch_size, 9, H, W)
-        # logits_cw (boundaries): (batch_size, 3, H, W)
+        # Convert pred_logits to softmax to get confidence per query
+        class_confidence = torch.softmax(pred_logits, dim=-1)  # (B, Q, C)
+        confidence_scores, predicted_classes = class_confidence.max(dim=-1)  # (B, Q)
 
-        # For simplicity, let's take the predicted masks and apply our heads
-        # First, resize pred_masks to original_size if necessary
-        pred_masks = F.interpolate(outputs.masks_queries_logits, size=original_size, mode="bilinear", align_corners=False)
+        # Select top-k masks by confidence
+        top_k = 10
+        topk_values, topk_indices = torch.topk(confidence_scores, k=top_k, dim=1)  # (B, k)
 
-        # Apply the custom heads to get the desired output channels
-        # Note: This is a simplified mapping. A more sophisticated approach might involve
-        #       interpreting pred_logits to select relevant masks or combining them.
-        logits_r = self.room_type_head(pred_masks)
-        logits_cw = self.boundary_head(pred_masks)
+        batch_size, _, H, W = pred_masks.shape
+        aggregated_mask = torch.zeros((batch_size, 1, H, W), device=self.device)
+
+        for b in range(batch_size):
+            selected_masks = pred_masks[b][topk_indices[b]]  # (k, H, W)
+            combined_mask = selected_masks.mean(dim=0).unsqueeze(0)  # (1, H, W)
+            aggregated_mask[b] = combined_mask
+
+        # Upsample to original input size
+        aggregated_mask = F.interpolate(aggregated_mask, size=original_size, mode='bilinear', align_corners=False)
+
+        # Project to desired output classes
+        logits_r = self.room_type_head(aggregated_mask)      # (B, 9, H, W)
+        logits_cw = self.boundary_head(aggregated_mask)      # (B, 3, H, W)
 
         return logits_r, logits_cw
 
