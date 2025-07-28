@@ -38,7 +38,7 @@ class DFPmodel(torch.nn.Module):
 
         # outputs.pred_masks: (B, num_queries, H_mask, W_mask)
         # outputs.pred_logits: (B, num_queries, num_classes)
-        pred_masks = outputs.pred_masks  # Shape: (B, Q, H, W)
+        pred_masks = outputs.masks_queries_logits  # Shape: (B, Q, H, W)
         pred_logits = outputs.class_queries_logits  # (B, Q, C)
 
         # Convert pred_logits to softmax to get confidence per query
