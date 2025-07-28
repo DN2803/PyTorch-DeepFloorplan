@@ -206,7 +206,7 @@ if __name__ == "__main__":
     p.add_argument('--loadmodel',type=str,default=None)
     p.add_argument('--valsplit',type=float,default=.1)
     p.add_argument('--tensorboard',type=bool,default=False)
-    p.add_argument('--earlystop',type=bool,default=True)
+    p.add_argument('--earlystop',type=bool,default=False)
     p.add_argument('--patience',type=int,default=20)
     args = p.parse_args()
     main(args)

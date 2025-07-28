@@ -19,8 +19,9 @@ class DFPmodel(torch.nn.Module):
         # We need to map these to [batch_size, num_room_types, H, W] and [batch_size, num_boundary_types, H, W]
         # For simplicity, let's assume num_queries can be mapped to num_room_types and num_boundary_types.
         # The original model outputs 9 channels for room types and 3 for boundaries.
-        self.room_type_head = nn.Conv2d(1, 9, kernel_size=1)
-        self.boundary_head = nn.Conv2d(1, 3, kernel_size=1)
+        C= 256
+        self.room_type_head = nn.Conv2d(C, 9, kernel_size=1)
+        self.boundary_head = nn.Conv2d(C, 3, kernel_size=1)
     
 
 
@@ -57,12 +58,10 @@ class DFPmodel(torch.nn.Module):
             combined_mask = selected_masks.mean(dim=0).unsqueeze(0)  # (1, H, W)
             aggregated_mask[b] = combined_mask
 
-        # Upsample to original input size
-        aggregated_mask = F.interpolate(aggregated_mask, size=original_size, mode='bilinear', align_corners=False)
-
-        # Project to desired output classes
-        logits_r = self.room_type_head(aggregated_mask)      # (B, 9, H, W)
-        logits_cw = self.boundary_head(aggregated_mask)      # (B, 3, H, W)
+        features = outputs.pixel_decoder_last_hidden_state  # (B, C, H, W)
+        # Upsample hoặc dùng Conv2d để chuyển thành segmentation
+        logits_r = self.room_type_head(features)
+        logits_cw = self.boundary_head(features)
 
         return logits_r, logits_cw
 
