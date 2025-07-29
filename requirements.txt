@@ -8,3 +8,4 @@ pandas
 tqdm
 scikit-image
 tensorboard
+ultralytics
