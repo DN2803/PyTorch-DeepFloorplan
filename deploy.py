@@ -28,7 +28,7 @@ def initialize(args):
     image = image.unsqueeze(0).to(device)
     # model
     model = DFPmodel()
-    model.load_state_dict(torch.load(args.loadmodel))
+    model.load_state_dict(torch.load(args.loadmodel, map_location=device))
     model.to(device)
     return device,orig,image,model
 
